@@ -19,7 +19,7 @@ class FramerRTU(FramerBase):
     Decoding is a complicated process because the RTU frame does not have a fixed prefix
     only suffix, therefore it is necessary to decode the content (PDU) to get length etc.
 
-    There are some restraints however that help the detection.
+    There are some protocol restrictions that help with the detection.
 
     For client:
        - a request causes 1 response !
@@ -36,18 +36,22 @@ class FramerRTU(FramerBase):
        - only 1 request allowed (master-slave) protocol
        - other devices will send responses
        - the client (master) may retransmit but in larger time intervals
-    this means decoding is always exactly 1 frame (request / response)
+    this means decoding is always exactly 1 frame request, however some requests
+    will be for unknown slaves, which must be ignored together with the
+    response from the unknown slave.
 
-    Recovery from bad cabling etc is important, the following scenarios is possible:
+    Recovery from bad cabling and unstable USB etc is important,
+    the following scenarios is possible:
        - garble data before frame
        - garble data in frame
        - garble data after frame
        - data in frame garbled (wrong CRC)
     decoding assumes the frame is sound, and if not enters a hunting mode.
 
-    The 3.5 byte wait 31ms at 1.200Bps and 1ms at 38.600bps,
-    so the decoder will wait for more data a number of milliseconds, if not the transmission is
-    considered complete
+    The 3.5 byte transmission time at the slowest speed 1.200Bps is 31ms.
+    Device drivers will typically flush buffer after 10ms of silence.
+    If no data is received for 50ms the transmission / frame can be considered
+    complete.
     """
 
     MIN_SIZE = 5
